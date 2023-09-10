@@ -15,16 +15,18 @@
  */
 #define maxParticles 16
 
+namespace Orbits {
+
 #define DEFAULT_MIN_DIMENSION_BOUND -2000
 #define DEFAULT_MAX_DIMENSION_BOUND 2000
 
 template <std::size_t dimension>
 class Tree {
-  struct mmm { // min, mid, max
-    float min;
-    float mid;
-    float max;
-  };
+  // struct mmm { // min, mid, max
+  //   float min;
+  //   float mid;
+  //   float max;
+  // };
   
   typedef Mass<dimension> Mass;
   typedef std::shared_ptr<Mass> MassPtr;
@@ -61,8 +63,8 @@ public:
   
   //----------------------------------------------------------------------------
   std::vector<std::pair<MassPtr,float>>
-  Tree::getNeighborsAndDistances(std::vector<float> targetPosition,
-                                 float radius);
+  getNeighborsAndDistances(std::vector<float> targetPosition,
+                           float radius);
 
   //----------------------------------------------------------------------------
   std::vector<MassPtr>
@@ -75,6 +77,7 @@ public:
                        float radius);
   
   //----------------------------------------------------------------------------
+  // not working yet
   void addForce(std::vector<float> target, float radius, float scale);
 
   //----------------------------------------------------------------------------
@@ -85,5 +88,7 @@ public:
 
   // void draw();
 };
+
+}; // end of namespace Orbits
 
 #endif /* Tree_h */

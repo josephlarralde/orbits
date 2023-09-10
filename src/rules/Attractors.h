@@ -20,39 +20,83 @@
 // returning a vector that should be added to the normal mass vector,
 // this way we could easily "comb" vector hair along the surface
 
+namespace Orbits {
 
-class Attractor {
-
-};
+// BASE ////////////////////////////////////////////////////////////////////////
 
 template <std::size_t dimension>
-class SimpleAttractor : public Attractor {
+class Attractor {
+public:
   std::vector<float> position;
+
+  Attractor() :
+    position(std::vector<float>(dimension, 0)) {}
+};
+
+// SIMPLE //////////////////////////////////////////////////////////////////////
+
+template <std::size_t dimension>
+class SimpleAttractor : public Attractor<dimension> {
+public:
   float radius;
-  float nearForce;
-  float farForce;
+  float radiusForce;
+  float centerForce;
+  float centerToRadiusCurveFactor; // exponent to apply to interpolation value
 
 public:
-  SimpleAttractor() :
-    position(std::vector<float>(dimension, 0)),
+  SimpleAttractor() : Attractor<dimension>(),
     radius(1),
-    nearForce(1),
-    farForce(0) {}
+    radiusForce(1),
+    centerForce(0),
+    centerToRadiusCurveFactor(1) {}
 };
+
+// MEMBRANE ////////////////////////////////////////////////////////////////////
+
+template<std::size_t dimension>
+class MembraneAttractor : public Attractor<dimension> {
+public:
+  mmm radius;
+};
+
+// SET OF ATTRACTORS ///////////////////////////////////////////////////////////
 
 template <std::size_t dimension>
 class Attractors : public Orbits<dimension>::Rule {
   std::vector<SimpleAttractor<dimension>> attractors;
 
 public:
+  // this should work (with a few adjustments)
   void process(Tree<dimension>* t) {
-    for (auto& attractor : attractors)
-    // t->getNeighborsAndDistances(attractor);
+    std::vector<float> res(dimension, 0);
+
+    for (auto& a : attractors) {
+      auto neigh = t->getNeighborsAndDistances(a.position, a.radius);
+      
+      for (auto& [ mass, dist ] : neigh) { // massPtr, distance to mass
+        auto& position = mass->getPosition();
+        // if ratio is 0 we use nearForce, if it is 1 then farForce, otherwise
+        // we interpolate
+        float ratio = a.radius - dist;
+
+
+        for (auto d = 0; d < dimension; ++d) {
+          res[d] = (position[d] - a.position[d]) / dist;
+        }
+
+        for (auto d = 0; d < dimension; ++d) {
+          // scale to attraction / repulsion range
+        }        
+        mass->applyForce(res);
+      }
+    }
   }
 
   void addAttractor() {
     attractors.push_back()
   }
 };
+
+}; // end of namespace orbits
 
 #endif /* ORBITS_ATTRACTORS_H */

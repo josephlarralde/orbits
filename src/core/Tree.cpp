@@ -1,6 +1,10 @@
+#include <bitset>
 #include "Tree.h"
 
-float Tree::clipToMinMaxDimensionBounds(float v)
+namespace Orbits {
+
+template <std::size_t dimension>
+float Tree<dimension>::clipToMinMaxDimensionBounds(float v)
 {
   return std::max(
     static_cast<float>(DEFAULT_MIN_DIMENSION_BOUND),
@@ -8,12 +12,14 @@ float Tree::clipToMinMaxDimensionBounds(float v)
   );
 }
 
-Tree::Tree()
+template <std::size_t dimension>
+Tree<dimension>::Tree()
 {
   initialize();
 }
 
-void Tree::initialize()
+template <std::size_t dimension>
+void Tree<dimension>::initialize()
 {
   hasChildren = false;
   nParticles = 0;
@@ -22,7 +28,8 @@ void Tree::initialize()
   subtrees = std::vector<TreePtr>(pow(2, dimension), nullptr);
 }
 
-void Tree::setBounds(const std::vector<std::pair<float,float>>& _bounds)
+template <std::size_t dimension>
+void Tree<dimension>::setBounds(const std::vector<std::pair<float,float>>& _bounds)
 {
   if (_bounds.size() != bounds.size()) return; // throw exception ?
 
@@ -34,14 +41,16 @@ void Tree::setBounds(const std::vector<std::pair<float,float>>& _bounds)
   setMid();
 }
 
-void Tree::setMid()
+template <std::size_t dimension>
+void Tree<dimension>::setMid()
 {
   for (auto& dim : bounds) {
     dim.mid = (dim.min + dim.max) * 0.5f;
   }
 }
 
-void Tree::add(MassPtr cur)
+template <std::size_t dimension>
+void Tree<dimension>::add(MassPtr cur)
 {
   if (hasChildren) {
     // we compute the subtree index value bit by bit (LSB to MSB),
@@ -59,7 +68,7 @@ void Tree::add(MassPtr cur)
       nParticles++;
     } else {
       for (auto i = 0; i < subtrees.size(); ++i) {
-        std::vector<pair<float,float>> subBounds;
+        std::vector<std::pair<float,float>> subBounds;
         std::bitset<sizeof(std::size_t) * CHAR_BIT> bitIndex{
           static_cast<std::size_t>(i)
         };
@@ -95,7 +104,8 @@ void Tree::add(MassPtr cur)
   }
 }
 
-void Tree::setup(const std::vector<MassPtr>& all) {
+template <std::size_t dimension>
+void Tree<dimension>::setup(const std::vector<MassPtr>& all) {
   int n = all.size();
 
   if (n > 0) {
@@ -138,8 +148,9 @@ void Tree::setup(const std::vector<MassPtr>& all) {
   }
 }
 
-std::vector<std::pair<MassPtr,float>>
-Tree::getNeighborsAndDistances(std::vector<float> targetPosition,
+template <std::size_t dimension>
+std::vector<std::pair<typename Tree<dimension>::MassPtr,float>>
+Tree<dimension>::getNeighborsAndDistances(std::vector<float> targetPosition,
                                float radius)
 {
   // delta, "squared dist" and "squared radius"
@@ -165,8 +176,9 @@ Tree::getNeighborsAndDistances(std::vector<float> targetPosition,
   return neighbors;
 }
 
-std::vector<MassPtr>
-Tree::getNeighbors(std::vector<float> targetPosition,
+template <std::size_t dimension>
+std::vector<typename Tree<dimension>::MassPtr>
+Tree<dimension>::getNeighbors(std::vector<float> targetPosition,
                    float radius)
 {
   // delta, "squared dist" and "squared radius"
@@ -191,8 +203,9 @@ Tree::getNeighbors(std::vector<float> targetPosition,
   return neighbors;
 }
 
+template <std::size_t dimension>
 void
-Tree::getIntersection(std::vector<MassPtr>& intersection,
+Tree<dimension>::getIntersection(std::vector<Tree::MassPtr>& intersection,
                       const std::vector<float>& targetPosition,
                       float radius)
 {
@@ -224,15 +237,16 @@ Tree::getIntersection(std::vector<MassPtr>& intersection,
   }
 }
 
+template <std::size_t dimension>
 void
-Tree::addForce(std::vector<float> target, float radius, float scale)
+Tree<dimension>::addForce(std::vector<float> target, float radius, float scale)
 {
-  std::deque<TreePtr> toProcess;
+  std::deque<Tree::TreePtr> toProcess;
   toProcess.push_back(this);
   float length, effect, sqr = radius * radius;
 
   while (!toProcess.empty()) {
-    TreePtr curTree = toProcess.front();
+    Tree::TreePtr curTree = toProcess.front();
     toProcess.pop_front();
     bool inside = true;
 
@@ -322,3 +336,5 @@ Tree::addForce(std::vector<float> target, float radius, float scale)
 //         }
 //     }
 // }
+
+}; // end namespace Orbits

@@ -10,7 +10,7 @@
 // compute the closest neighbours multiple times
 
 // NB : we could act on (and/)or react to neighbors, it is the same
-// thing from a different perspective, so we will react to them
+// thing from a different perspective, so we decide to react to them
 
 template <std::size_t dimension>
 class Neighbours : public Orbits<dimension>::Rule {

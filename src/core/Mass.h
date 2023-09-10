@@ -2,7 +2,16 @@
 #define Mass_h
 
 #include <vector>
+#include <cmath>
 #include <cstdint>
+
+namespace Orbits {
+
+struct mmm { // min, mid, max
+  float min;
+  float mid;
+  float max;
+};
 
 template <std::size_t dimension>
 class Mass {
@@ -85,7 +94,7 @@ public:
     for (auto& s : speed) {
       res += s * s;
     }
-    return sqrt(res);
+    return std::sqrt(res);
   }
 
   void applyForce(std::vector<float>& f) {
@@ -120,5 +129,7 @@ private:
     return v.size() == dimension;
   }
 };
+
+}; // end of namespace Orbits
 
 #endif /* Mass_h */

@@ -54,13 +54,19 @@ public:
   
   float getK() { return k; }
   void setK(float _k) { k = _k; }
+
+  // damping should be normalized by the critical damping value
+  // critical damping formula : Cc = 2 * sqrt(k * m)
+  // from where to apply this : to a spring ? to a mass ? makes more sense to a spring
+  // because a mass doesn't have a "k" value
+  float getD() { return d; }
+  void setD(float _d) { d = _d; }
   
   void update() {
     if (!massesAreSet()) return; // throw exception ?
             
     applyForce(masses.first, masses.second);
     applyForce(masses.second, masses.first);
-    
   }
     
 private:
