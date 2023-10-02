@@ -4,6 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 
 namespace Orbits {
 
@@ -33,16 +34,16 @@ private:
   std::vector<float> force;
 
 public:
-  Mass(std::size_t dim = 2) :
-    d(0.95f),
-    m(0.15f),
-    f(0.f),
-    defaultDimensionBounds({ -2000, 2000 }),
-    bounds(std::vector<dimensionBounds<float>>(dimension)),
-    position(std::vector<float>(dimension, 0)),
-    speed(std::vector<float>(dimension, 0)),
-    accel(std::vector<float>(dimension, 0)),
-    force(std::vector<float>(dimension, 0))
+  Mass() :
+  d(0.95f),
+  m(0.15f),
+  f(0.f),
+  defaultDimensionBounds({ -2000, 2000 }),
+  bounds(std::vector<dimensionBounds<float>>(dimension)),
+  position(std::vector<float>(dimension, 0)),
+  speed(std::vector<float>(dimension, 0)),
+  accel(std::vector<float>(dimension, 0)),
+  force(std::vector<float>(dimension, 0))
   {
     for (auto& dim : bounds) {
       dim.min = defaultDimensionBounds.min;
