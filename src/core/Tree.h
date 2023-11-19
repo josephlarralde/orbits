@@ -117,7 +117,8 @@ public:
         // if allEqual was true and we set mid to the duplicate position
         // we will randomly distribute our duplicates to the subtrees
         // while maintaining coherency.
-        // this might introduce unpredicted issues, so keep an eye on this
+        // this should be rewritten with some kind of counter that evenly
+        // distributes duplicates across the halves of each dimension
         if (cur->getPosition()[d] == bounds[d].mid) {
           bitIndex[d] = std::rand() > (RAND_MAX / 2);
         } else {

@@ -12,23 +12,23 @@
 // NB : we could act on (and/)or react to neighbors, it is the same
 // thing from a different perspective, so we decide to react to them
 
+namespace Orbits {
+
 template <std::size_t dimension>
-class Neighbours : public Orbits<dimension>::Rule {
+class Neighbours : public Orbits<dimension>::Rule
+{
   float radius;
 
-
 public:
-  void process(Tree<dimension>* t) override {
-    
-  }
+  void process(Tree<dimension>* t) override { }
 
-  void setRadius(float r) {
-    radius = r;
-  }
+  void setRadius(float r) { radius = r; }
 
-  void match(float amount, float ) {
+  void match(float amount, float r) { }
 
-  }
+  void avoid(float amount, float r) { }
 };
 
-#endif //ORBITS_NEIGHBOURS_H
+} /* end namespace Orbits */
+
+#endif /* ORBITS_NEIGHBOURS_H */

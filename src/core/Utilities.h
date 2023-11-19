@@ -8,6 +8,38 @@
 #ifndef Utilities_h
 #define Utilities_h
 
+template <typename T>
+T computeVectorNorm(const std::vector<T>& v) {
+  T res = 0;
+  for (auto& e : v) res += e * e;
+  return std::sqrt(res);
+}
+
+template <typename T>
+void normalizeVector(std::vector<T>& v) {
+  T normRatio = 1 / computeVectorNorm(v);
+  for (auto& e : v) e *= normRatio;
+}
+
+template <typename T>
+const std::vector<T> computeNormalizedVector(const std::vector<T>& v) {
+  std::vector<T> res = v;
+  normalizeVector(res);
+  return res;
+}
+
+template <typename T>
+void scaleVector(std::vector<T>& v, T s) {
+  for (auto& e : v) e *= s;
+}
+
+template <typename T>
+const std::vector<T> computeScaledVector(const std::vector<T>& v, T s) {
+  std::vector<T> res = v;
+  scaleVector(res, s);
+  return res;
+}
+
 // simple running statistics ///////////////////////////////////////////////////
 
 /**

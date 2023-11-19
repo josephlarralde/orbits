@@ -4,36 +4,42 @@
 #include <cmath>
 #include "Mass.h"
 
+namespace Orbits
+{
+
 template <std::uint8_t dimension>
-class Spring {
+class Spring
+{
 private:
   //std::uint8_t dimension;
   float k; // tension
   float d; // damping
   float minLength;
   float maxLength;
-  
+
   typedef std::shared_ptr<Mass<dimension>> MassPtr;
   std::pair<MassPtr, MassPtr> masses;
-  
+
   //std::pair<std::shared_ptr<Mass>, std::shared_ptr<Mass>> masses;
-    
+
 public:
-  Spring(std::uint8_t dim = 2) :
-  //dimension(dim),
-  k(1.5f),
-  d(0.f),
-  minLength(0),
-  maxLength(200),
-  masses({ nullptr, nullptr }) {}
-  
-  ~Spring() {}
-  
+  Spring(std::uint8_t dim = 2)
+      : //dimension(dim),
+      k(1.5f)
+      , d(0.f)
+      , minLength(0)
+      , maxLength(200)
+      , masses({nullptr, nullptr})
+  {
+  }
+
+  ~Spring() { }
+
   void setMasses(
-    //std::pair<std::shared_ptr<Mass<dimension>>,
-    //          std::shared_ptr<Mass<dimension>>> m
-    std::pair<MassPtr, MassPtr> m
-  ) {
+      //std::pair<std::shared_ptr<Mass<dimension>>,
+      //          std::shared_ptr<Mass<dimension>>> m
+      std::pair<MassPtr, MassPtr> m)
+  {
     /*
     // OBSOLETE DUE TO USAGE OF dimension TEMPLATE PARAMETER
     // MassPtr can only be nullptr or point to a Mass of dimension "dimension" :
@@ -51,7 +57,7 @@ public:
     masses.first = m.first;
     masses.second = m.second;
   }
-  
+
   float getK() { return k; }
   void setK(float _k) { k = _k; }
 
@@ -61,44 +67,48 @@ public:
   // because a mass doesn't have a "k" value
   float getD() { return d; }
   void setD(float _d) { d = _d; }
-  
-  void update() {
-    if (!massesAreSet()) return; // throw exception ?
-            
+
+  void update()
+  {
+    if(!massesAreSet())
+      return; // throw exception ?
+
     applyForce(masses.first, masses.second);
     applyForce(masses.second, masses.first);
   }
-    
+
 private:
-  bool massesAreSet() {
-    return (masses.first != nullptr && masses.second != nullptr);
-  }
-  
-  void applyForce(MassPtr massToApplyForceTo,
-                  MassPtr otherMass) {
-      
+  bool massesAreSet() { return (masses.first != nullptr && masses.second != nullptr); }
+
+  void applyForce(MassPtr massToApplyForceTo, MassPtr otherMass)
+  {
+
     float distance = 0;
     std::vector<float> distances(dimension, 0);
 
-    for (std::uint8_t i = 0; i < dimension; ++i) {
-      distances[i] =
-        massToApplyForceTo->getPosition()[i] -
-        otherMass->getPosition()[i];
+    for(std::uint8_t i = 0; i < dimension; ++i)
+    {
+      distances[i] = massToApplyForceTo->getPosition()[i] - otherMass->getPosition()[i];
       distance += (distances[i] * distances[i]);
     }
-    
+
     distance = sqrt(distance);
     float ratio = fmin(1.f, fabs(distance) / maxLength);
-    
+
     std::vector<float> force(dimension);
 
-    for (std::uint8_t i = 0; i < dimension; ++i) {
+    for(std::uint8_t i = 0; i < dimension; ++i)
+    {
       distance = distances[i] * ratio;
-      force[i] = -k * distance;      
+      force[i] = -k * distance;
+      // todo : add damping to this equation
+      //  force[i] = -k * distance + -d * <distance_variation>
     }
-    
+
     massToApplyForceTo->applyForce(force);
   }
 };
+
+} /* end namespace Orbits */
 
 #endif /* Spring_h */

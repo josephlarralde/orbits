@@ -25,12 +25,22 @@ namespace Orbits {
 // BASE ////////////////////////////////////////////////////////////////////////
 
 template <std::size_t dimension>
-class Attractor {
-public:
+class Attractor : public Orbits<dimension>::Rule {
   std::vector<float> position;
 
+public:
   Attractor() :
-    position(std::vector<float>(dimension, 0)) {}
+  Orbits<dimension>::Rule(),
+  position(std::vector<float>(dimension, 0.f))
+  {
+    this->addParameter("position", [&](const std::vector<float>& v) {
+      if (v.size() != dimension) return;
+      position = v;
+    });
+  }
+
+  virtual void setPosition(const std::vector<float>& p) { position = p; }
+  virtual const std::vector<float>& getPosition() { return position; }
 };
 
 // SIMPLE //////////////////////////////////////////////////////////////////////
@@ -41,22 +51,83 @@ public:
   float radius;
   float radiusForce;
   float centerForce;
+  float deltaForce;
   float centerToRadiusCurveFactor; // exponent to apply to interpolation value
 
 public:
-  SimpleAttractor() : Attractor<dimension>(),
-    radius(1),
-    radiusForce(1),
-    centerForce(0),
-    centerToRadiusCurveFactor(1) {}
+  SimpleAttractor() :
+  Attractor<dimension>(),
+  radius(1.f),
+  radiusForce(1.f),
+  centerForce(0.f),
+  deltaForce(radiusForce - centerForce),
+  centerToRadiusCurveFactor(1.f)
+  {
+    this->addParameter("radius", [&](const std::vector<float>& v) {
+      if (v.empty()) return;
+      setRadius(v[0]);
+    });
+
+    this->addParameter("radiusForce", [&](const std::vector<float>& v) {
+      if (v.empty()) return;
+      setRadiusForce(v[0]);
+    });
+
+    this->addParameter("centerForce", [&](const std::vector<float>& v) {
+      if (v.empty()) return;
+      setCenterForce(v[0]);
+    });
+
+    this->addParameter("centerToRadiusCurveFactor", [&](const std::vector<float>& v) {
+      if (v.empty()) return;
+      setCenterToRadiusCurveFactor(v[0]);
+    });
+  }
+
+  void setRadius(float f) { radius = f; }
+
+  void setRadiusForce(float f) {
+    radiusForce = f;
+    deltaForce = radiusForce - centerForce;
+  }
+
+  void setCenterForce(float f) {
+    centerForce = f;
+    deltaForce = radiusForce - centerForce;
+  }
+
+  void setCenterToRadiusCurveFactor(float f) {
+    centerToRadiusCurveFactor = f;
+  }
+
+  virtual void processParticles(
+    Tree<dimension>* t,
+    std::vector<std::shared_ptr<Mass<dimension>>>,
+    float dt
+  ) override {
+    auto neigh = t->getNeighborsAndDistances(this->position, radius);
+
+    for (auto [ m, d ] : neigh) {
+      float curve = powf(d / radius, centerToRadiusCurveFactor);
+      m->applyForce(curve * deltaForce + centerForce);
+    }
+  }
 };
 
 // MEMBRANE ////////////////////////////////////////////////////////////////////
 
 template<std::size_t dimension>
 class MembraneAttractor : public Attractor<dimension> {
+  mmm radii; // closest to centre, membrane radius, farthest from centre
+  mmm forces;
+
 public:
-  mmm radius;
+  MembraneAttractor() :
+  Attractor<dimension>(),
+  radii({ 0.f, 1.f, 2.f})
+  {
+    // todo
+  }
 };
 
 // SET OF ATTRACTORS ///////////////////////////////////////////////////////////
@@ -67,7 +138,7 @@ class Attractors : public Orbits<dimension>::Rule {
 
 public:
   // this should work (with a few adjustments)
-  void process(Tree<dimension>* t) {
+  void processParticlesTree(Tree<dimension>* t) {
     std::vector<float> res(dimension, 0);
 
     for (auto& a : attractors) {
@@ -86,17 +157,18 @@ public:
 
         for (auto d = 0; d < dimension; ++d) {
           // scale to attraction / repulsion range
-        }        
+        }
+
         mass->applyForce(res);
       }
     }
   }
 
-  void addAttractor() {
-    attractors.push_back()
+  void addAttractor(std::shared_ptr<SimpleAttractor<dimension>> a) {
+    attractors.push_back(a);
   }
 };
 
-}; // end of namespace orbits
+}; /* end namespace orbits */
 
 #endif /* ORBITS_ATTRACTORS_H */

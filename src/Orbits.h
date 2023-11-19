@@ -3,6 +3,7 @@
 
 #include <map>
 #include <cmath>
+#include <chrono>
 
 #include "./core/Tree.h"
 
@@ -11,18 +12,42 @@ namespace Orbits {
 template <std::size_t dimension>
 class Orbits {
 public:
-  // simple definition of rule class
-  class Rule {
-  public:
-    virtual void setParameter(const char* parameterName, const std::vector<float>& values) {}
-    virtual void process(Tree<dimension>* t) {}
-  };
-
-// private:
   typedef Mass<dimension> Mass;
   typedef std::shared_ptr<Mass> MassPtr;
 
+  // simple definition of Rule class
+  class Rule {
+  protected:
+    std::map<const char*, std::function<void(const std::vector<float>&)>> setters;
+
+  public:
+    virtual void addParameter(const char* parameterName,
+                              std::function<void(const std::vector<float>&)> setter) {
+      setters[parameterName] = setter;
+    }
+
+    // virtual void addParameter(const char* parameterName,
+    //                           std::function<void(float)> setter) {
+    //   setters[parameterName] = [&](const std::vector<float>& v) {
+    //     setter({ v });
+    //   };
+    // }
+
+    virtual void setParameter(const char* parameterName, const std::vector<float>& values) {
+      if (setters.find(parameterName) != setters.end()) {
+        setters[parameterName](values);
+      }
+    }
+
+    // clunky API until I figure out how to write a Mass iterator on the Tree to
+    // get rid of the reference to particles here :
+    virtual void processParticles(Tree<dimension>* t, std::vector<MassPtr>& v, float dt) {}
+    // virtual void processParticlesTree(Tree<dimension>* t) {}
+    // virtual void processParticlesVector(std::vector<MassPtr>& v) {}
+  };
+
 private:
+  std::chrono::time_point<std::chrono::steady_clock> lastTickDate;
   std::vector<MassPtr> particles; // the particles
   std::unique_ptr<Tree<dimension>> tree; // the tree to compute closest particles
   std::map<const char*, std::shared_ptr<Rule>> rules; // the navigation rules to apply
@@ -51,28 +76,44 @@ public:
   // and DEFAULT_MAX_DIMENSION_BOUND
   
   // set particles basic physical parameters :
-  void setM(float m) { for (auto p : tree.particles) p->setM(m); } // mass
-  void setD(float m) { for (auto p : tree.particles) p->setD(m); } // damping
-  void setF(float m) { for (auto p : tree.particles) p->setF(m); } // friction
+  void setM(float m) { for (auto p : particles) p->setM(m); } // mass
+  // damping doesn't make sense for a mass alone !!!
+  // void setD(float d) { for (auto p : particles) p->setD(d); } // damping
+  void setF(float f) { for (auto p : particles) p->setF(f); } // friction
 
-  void addRule(const char* name, std::shared_ptr<Rule> rule) {
-    rules[name] = rule;
+  void addRule(const char* ruleName, std::shared_ptr<Rule> rule) {
+    rules[ruleName] = rule;
   }
 
-  void setParameter(const char* ruleName, const char* parameterName, const std::vector<float>& values) {
-    // if (std::strcmp(parameterName, "stuff") == 0) {
-    //   rules[ruleName]->setParameter(parameterValue);
-    // }
-    rules[ruleName]->setParameter(parameterName, values);
+  void setParameter(const char* ruleName,
+                    const char* parameterName,
+                    const std::vector<float>& values) {
+    if (rules.find(ruleName) != rules.end()) {
+      rules[ruleName]->setParameter(parameterName, values);
+    }
   }
   
   void step() {
+    // deal with timing
+    auto now = std::chrono::steady_clock::now();
+    // if we wanted milliseconds units :
+    // const std::chrono::duration<double, std::milli> dur = now - lastTickDate;
+    // but we want the default, standard unit (seconds) :
+    const std::chrono::duration<double> delta = now - lastTickDate;
+    const float dt = delta.count();
+    lastTickDate = now;
+
+    // build tree
     tree.reset(new Tree<dimension>());
     tree->setup(particles);
 
+    // apply rules
+    // todo : add optional dt argument to process / update methods
     for (auto& [ ruleName, rule ] : rules) {
-      rule->process(tree.get());
+      rule->processParticles(tree.get(), particles, dt);
     }
+
+    for (auto m : particles) m->update(dt);
   }
 
   std::vector<std::vector<float>>
@@ -108,6 +149,6 @@ private:
   }
 };
 
-}; // end of namespace Orbits
+}; /* end namespace Orbits */
 
 #endif /* ORBITS_ORBITS_H */
