@@ -173,6 +173,7 @@ private:
       for (std::size_t d = 0; d < dimension; ++d) {
         point[d] = distribution(generator);
       }
+      normalizeVector(point);
       particles[i]->setSpeed(point);
     }
     std::vector<float> dist(particles.size());
