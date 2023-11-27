@@ -12,21 +12,44 @@
 // NB : we could act on (and/)or react to neighbors, it is the same
 // thing from a different perspective, so we decide to react to them
 
+// UPDATE : after watching a very enlightening video explanation of the
+// n nearest neighbours influence model (which seems more realistic than a
+// radius-based model), we choose to implement this principle.
+// We might use a strategy pattern here (the radius based approach could still
+// make sense in certain situations, and there is also another "vision-cone"
+// based approach which seems even more realistic but more computationally
+// expensive ...)
+
 namespace Orbits {
 
 template <std::size_t dimension>
 class Neighbours : public Orbits<dimension>::Rule
 {
-  float radius;
+  std::size_t numberOfNearestNeighbors;
+  float maximumRadius;
 
 public:
-  void process(Tree<dimension>* t) override { }
+  Neighbours() :
+    numberOfNearestNeighbors(6),
+    maximumRadius(1e+3f)
+  {
 
-  void setRadius(float r) { radius = r; }
+  }
+
+  void setNumberOfNearestNeighbors(std::size_t n) { numberOfNearestNeighbors = n; }
+
+  void setMaximumRadius(float r) { maximumRadius = r; }
 
   void match(float amount, float r) { }
 
   void avoid(float amount, float r) { }
+
+  void processParticles(Tree<dimension>* t,
+                        std::vector<std::shared_ptr<Mass<dimension>>>& v,
+                        float dt) override
+  {
+    // todo
+  }
 };
 
 } /* end namespace Orbits */

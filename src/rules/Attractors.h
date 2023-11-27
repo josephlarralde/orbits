@@ -30,8 +30,8 @@ class Attractor : public Orbits<dimension>::Rule {
 
 public:
   Attractor() :
-  Orbits<dimension>::Rule(),
-  position(std::vector<float>(dimension, 0.f))
+    Orbits<dimension>::Rule(),
+    position(std::vector<float>(dimension, 0.f))
   {
     this->addParameter("position", [&](const std::vector<float>& v) {
       if (v.size() != dimension) return;
@@ -56,12 +56,12 @@ public:
 
 public:
   SimpleAttractor() :
-  Attractor<dimension>(),
-  radius(1.f),
-  radiusForce(1.f),
-  centerForce(0.f),
-  deltaForce(radiusForce - centerForce),
-  centerToRadiusCurveFactor(1.f)
+    Attractor<dimension>(),
+    radius(1.f),
+    radiusForce(1.f),
+    centerForce(0.f),
+    deltaForce(radiusForce - centerForce),
+    centerToRadiusCurveFactor(1.f)
   {
     this->addParameter("radius", [&](const std::vector<float>& v) {
       if (v.empty()) return;
@@ -100,12 +100,11 @@ public:
     centerToRadiusCurveFactor = f;
   }
 
-  virtual void processParticles(
-    Tree<dimension>* t,
-    std::vector<std::shared_ptr<Mass<dimension>>>,
-    float dt
-  ) override {
-    auto neigh = t->getNeighborsAndDistances(this->position, radius);
+  void processParticles(Tree<dimension>* t,
+                        std::vector<std::shared_ptr<Mass<dimension>>>& v,
+                        float dt) override
+  {
+    auto neigh = t->getNeighborsAndDistances(this->getPosition(), radius);
 
     for (auto [ m, d ] : neigh) {
       float curve = powf(d / radius, centerToRadiusCurveFactor);
@@ -123,8 +122,9 @@ class MembraneAttractor : public Attractor<dimension> {
 
 public:
   MembraneAttractor() :
-  Attractor<dimension>(),
-  radii({ 0.f, 1.f, 2.f})
+    Attractor<dimension>(),
+    radii({0.f, 1.f, 2.f}),
+    forces({0.f, 0.f, 0.f})
   {
     // todo
   }
@@ -132,6 +132,7 @@ public:
 
 // SET OF ATTRACTORS ///////////////////////////////////////////////////////////
 
+/*
 template <std::size_t dimension>
 class Attractors : public Orbits<dimension>::Rule {
   std::vector<SimpleAttractor<dimension>> attractors;
@@ -168,6 +169,7 @@ public:
     attractors.push_back(a);
   }
 };
+//*/
 
 }; /* end namespace orbits */
 
