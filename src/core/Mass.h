@@ -49,7 +49,6 @@ private:
   std::vector<float> normalizedSpeed; // normalized speed vector
   float speedNorm;                    // length of speed vector
 
-
 public:
   Mass() :
   mass(0.15f),
@@ -107,23 +106,20 @@ public:
     // }
   }
 
-  const std::vector<float>& getSpeed() { return speed; }
+  const std::vector<float>& getSpeed() const { return speed; }
 
   void setSpeed(std::vector<float>& s) {
     if (!dimensionIsValid(s)) return;
     speed = s;
-    // for (std::size_t i = 0; i < dimension; ++i) {
-    //   speed[i] = s[i];
-    // }
+    updateSpeed();
   }
 
-  float getSpeedNorm() { return speedNorm; }
+  float getSpeedNorm() const { return speedNorm; }
 
-  const std::vector<float>& getNormalizedSpeed() { return normalizedSpeed; }
+  const std::vector<float>& getNormalizedSpeed() const { return normalizedSpeed; }
 
-  void applyForce(std::vector<float>& f) {
+  void applyForce(const std::vector<float>& f) {
     if (!dimensionIsValid(f)) return; // throw exception ?
-
     for (std::size_t i = 0; i < dimension; ++i) force[i] += f[i];
   }
 
@@ -132,7 +128,7 @@ public:
    * @brief core of the Mass class, mostly inspired from www.red3d.com/cwr/steer/gdc99/
    */
   void update(float dt) {
-    // clip force vector norm to MAX_FORCE
+    // compute forceNorm and clip force vector norm to MAX_FORCE
     const float forceNorm = computeVectorNorm(force);
     if (forceNorm > MAX_FORCE) scaleVector(force, MAX_FORCE / forceNorm);
 
@@ -145,13 +141,7 @@ public:
       speed[i] += accel[i] * dt;
     }
 
-    // update speedNorm and clip speed vector
-    speedNorm = computeVectorNorm(speed);
-    if (speedNorm > MAX_SPEED) scaleVector(speed, MAX_SPEED / speedNorm);
-
-    // update normalizedSpeed
-    normalizedSpeed = speed;
-    computeScaledVector(normalizedSpeed, 1 / speedNorm);
+    updateSpeed();
 
     // update position from new speed
     for (std::size_t i = 0; i < dimension; ++i) position[i] += speed[i];
@@ -161,7 +151,21 @@ public:
   }
   
 private:
-  bool dimensionIsValid(std::vector<float>& v) {
+  void updateSpeed() {
+    // update speedNorm and clip speed vector norm to MAX_SPEED
+    speedNorm = computeVectorNorm(speed);
+
+    if (speedNorm > MAX_SPEED) {
+      scaleVector(speed, MAX_SPEED / speedNorm);
+      speedNorm = MAX_SPEED;
+    }
+
+    // update normalizedSpeed
+    normalizedSpeed = speed;
+    scaleVector(normalizedSpeed, 1 / speedNorm);
+  }
+
+  bool dimensionIsValid(const std::vector<float>& v) const {
     return v.size() == dimension;
   }
 };
