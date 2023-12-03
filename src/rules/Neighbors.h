@@ -23,13 +23,13 @@
 namespace Orbits {
 
 template <std::size_t dimension>
-class Neighbours : public Orbits<dimension>::Rule
+class Neighbors : public Orbits<dimension>::Rule
 {
   std::size_t numberOfNearestNeighbors;
   float maximumRadius;
 
 public:
-  Neighbours() :
+  Neighbors() :
     numberOfNearestNeighbors(6),
     maximumRadius(1e+3f)
   {
