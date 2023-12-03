@@ -146,7 +146,8 @@ class Wandering : public Orbits<dimension>::Rule
       // on the Wandering class ?
       // this would generate random values between 0 and 0 to 2PI and call
       // resetPhase here with each of these values :
-      void setPhase(float f) { this->phase = f; }
+      // THIS METHOD IS ALREADY DEFINED IN THE BASE OSCILLATOR CLASS !
+      // void setPhase(float f) { this->phase = f; }
 
       void setVariationFrequency(float f) {
         this->baseFrequency = f;
@@ -181,7 +182,7 @@ class Wandering : public Orbits<dimension>::Rule
     std::vector<float> angles;
 
   public:
-    explicit MassWanderer(MassWandererState s) :
+    explicit MassWanderer(const MassWandererState& s) :
     guideDistance(s.guideDistance),
     guideRadius(s.guideRadius),
     angleWanderers(dimension - 1),
@@ -225,7 +226,8 @@ class Wandering : public Orbits<dimension>::Rule
     // to get a less erratic movement :
     std::vector<float> getForceToApply(std::shared_ptr<Mass<dimension>> m,
                                        float amount = 1.f) {
-      const auto& direction = m->getNormalizedSpeed();
+      // copy normalized speed vector (getNormalizedSpeed returns a const ref)
+      std::vector<float> direction = m->getNormalizedSpeed();
       scaleVector<float>(direction, guideDistance);
 
       auto deviation = sphericalToCartesian(angles);
@@ -281,7 +283,8 @@ public:
 
     this->addParameter("frequencyRange", [&](const std::vector<float>& v) {
       if (v.size() != 2) return;
-      setFrequencyRange({v[0], v[1]});
+      dimensionBounds<float> r = {.min = v[0], .max = v[1]};
+      setFrequencyRange(r);
     });
   }
 
@@ -315,7 +318,7 @@ public:
     for (auto& w : massWanderers) { w.setRandomVariationFrequency(f); }
   }
 
-  void setFrequencyRange(dimensionBounds<float>& r) {
+  void setFrequencyRange(const dimensionBounds<float>& r) {
     state.frequencyRange = r;
     for (auto& w : massWanderers) { w.setFrequencyRange(r); }
   }
@@ -323,7 +326,7 @@ public:
   // kind of init function -----------------------------------------------------
 
   void setSize(std::size_t s) {
-    massWanderers = std::vector<MassWanderer>(s, state);
+    massWanderers = std::vector<MassWanderer>(s, MassWanderer{state});
   }
 
   // MAIN RULE CALLBACK ////////////////////////////////////////////////////////
@@ -340,7 +343,7 @@ public:
 
     for (std::size_t i = 0; i < v.size(); ++i) {
       massWanderers[i].step(scaledDt);
-      auto f = massWanderers[i].getForceToApply(v[i], forceMultiplier);
+      const std::vector<float> f = massWanderers[i].getForceToApply(v[i], forceMultiplier);
       v[i]->applyForce(f);
     }
   }
