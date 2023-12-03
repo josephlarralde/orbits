@@ -152,18 +152,18 @@ private:
     }
   }
 
-  // todo implement this in an efficient way
-  void setRandomParticleSpeeds() {
+  /*
+   * create a set of random points uniformly distributed on the
+   * (dimension-1)-sphere (or n-ball).
+   * see https://en.wikipedia.org/wiki/N-sphere#Uniformly_at_random_on_the_(n_%E2%88%92_1)-sphere
+   * and https://en.wikipedia.org/wiki/N-sphere#Uniformly_at_random_within_the_n-ball
+   * we use normal deviates computed from std::normal_distribution for each
+   * dimension, then we normalized the obtained vectors, and voilà !
+   * (actually we use a single normal deviate for all dimension, but it should
+   * behave pretty much the same).
+   */
 
-    // create a set of random points uniformly distributed on the
-    // (dimension-1)-sphere (or n-ball).
-    // see https://en.wikipedia.org/wiki/N-sphere#Uniformly_at_random_on_the_(n_%E2%88%92_1)-sphere
-    // and https://en.wikipedia.org/wiki/N-sphere#Uniformly_at_random_within_the_n-ball
-    // we use normal deviates computed from std::normal_distribution for each
-    // dimension, then we normalized the obtain vectors, and voilà !
-    // (actually we use a single normal deviate for all dimension, but it should
-    // behave pretty much the same).
-
+  void setRandomParticleDirections(float newSpeed = 1.f, bool overwriteSpeedOnlyIfNull = true) {
     std::vector<float> point(dimension);
     std::random_device seed_generator;
     std::default_random_engine generator(seed_generator);
@@ -173,12 +173,19 @@ private:
       for (std::size_t d = 0; d < dimension; ++d) {
         point[d] = distribution(generator);
       }
-      normalizeVector(point);
+
+      if (particles[i]->getNormalizedSpeed() > 1e-6f
+          && overwriteSpeedOnlyIfNull) {
+        // speed is not null so we don't overwrite it.
+        // we keep the old vector's norm but give it a new random direction
+        scaleVector(point, particles[i]->getNormalizedSpeed());
+      } else {
+        // we assign the speed vector a new random direction with norm "newSpeed"
+        scaleVector(point, newSpeed);
+      }
+
       particles[i]->setSpeed(point);
     }
-    std::vector<float> dist(particles.size());
-
-
   }
 };
 
