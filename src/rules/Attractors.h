@@ -107,8 +107,10 @@ public:
     auto neigh = t->getNeighborsAndDistances(this->getPosition(), radius);
 
     for (auto [ m, d ] : neigh) {
-      float curve = powf(d / radius, centerToRadiusCurveFactor);
-      m->applyForce(curve * deltaForce + centerForce);
+      m->applyForce(computeScaledVector(
+        substractVectors(m->getPosition(), this->getPosition()),
+        powf(d / radius, centerToRadiusCurveFactor) * deltaForce + centerForce
+      ));
     }
   }
 };

@@ -21,6 +21,16 @@ std::vector<T> addVectors(const std::vector<T>& v1, const std::vector<T>& v2) {
 }
 
 template <typename T>
+std::vector<T> substractVectors(const std::vector<T>& v1, const std::vector<T>& v2) {
+  std::size_t size = std::min(v1.size(), v2.size());
+  std::vector<T> res(size, 0.f);
+  for (std::size_t i = 0; i < size; ++i) {
+    res[i] = v1[i] - v2[i];
+  }
+  return res;
+}
+
+template <typename T>
 T computeVectorNorm(const std::vector<T>& v) {
   T res = 0;
   for (auto& e : v) res += e * e;
