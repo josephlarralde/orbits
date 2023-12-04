@@ -310,7 +310,84 @@ public:
   }
 
   //----------------------------------------------------------------------------
+
+  /*
+   * returns the n nearest neighbors with their respective distances, sorted by
+   * proximity.
+   */
+
+  std::vector<std::pair<MassPtr, float>>
+  getNearestNeighbors(const std::vector<float> targetPosition,
+                      std::size_t n,
+                      bool removeFirstElement = true) { // if we use e.g. a mass's position as target
+    // this is a dichotomic algorithm :
+    // * we first initialize minRadius to 0 and estimate maxRadius as the
+    //   "hyper-diagonal" (the longest possible distance) of the bounds
+    // * we adjust min and max radius iteratively until one of the following
+    //   things happens :
+    //   * we find a radius where we got exactly n neighbors and proceed
+    //     with it (actually we assign it to maxRadius)
+    //   * we exceed a max number of iterations and proceed with the
+    //     current maxRadius, which should encompass a number of neighbors > n
+    // * when we proceed, maxRadius represents a zone where we have n neighbors
+    //   or more (but hopefully not too much), so we just sort the result of
+    //   getNeighborsAndDistances() by distance, and only keep the n closest
+
+    float minRadius = 0.f;
+    float maxRadius = 0.f; // max possible distance in bounds ("hyper-diagonal")
+    float delta = 0.f;
+
+    for (std::size_t d = 0; d < dimension; ++d) {
+      delta = bounds[d].max - bounds[d].min;
+      maxRadius += delta * delta;
+    }
+    maxRadius = std::sqrt(maxRadius);
+
+    const std::size_t MAX_KNN_DICHOTOMIC_ITERATIONS = 5;
+
+    bool gotExactMatch = false;
+    std::vector<MassPtr> massesAtRadius;
+
+    for (std::size_t i = 0; i < MAX_KNN_DICHOTOMIC_ITERATIONS; ++i) {
+      float midRadius = (maxRadius + minRadius) * 0.5f;
+      massesAtRadius = getNeighbors(targetPosition, midRadius);
+
+      if (massesAtRadius.size() < n + 1) {
+        minRadius = midRadius;
+      } else if (massesAtRadius.size() > n + 1) {
+        maxRadius = midRadius;
+      } else { //  we've got an exact match
+        maxRadius = midRadius;
+        break;
+      }
+    }
+
+    typedef std::pair<MassPtr, float> MassDist;
+    std::vector<MassDist> res = getNeighborsAndDistances(targetPosition,maxRadius);
+
+    if (res.size() < n + 1) {
+      // raise error ??? or simply return smaller vector ... ?
+    }
+
+    auto comp = [](MassDist a, MassDist b) -> bool {
+      return a.second < b.second;
+    };
+    std::sort(res.begin(), res.end(), comp);
+
+    if (removeFirstElement && res.size() > 0) {
+      res.erase(res.begin());
+    }
+
+    if (res.size() > n) {
+      res.resize(n);
+    }
+
+    return res;
+  }
+
+  //----------------------------------------------------------------------------
   // not working yet
+  /*
   void addForce(std::vector<float> target, float radius, float scale) {
     std::deque<Tree::TreePtr> toProcess;
     toProcess.push_back(this);
@@ -339,6 +416,7 @@ public:
       }
     }
   }
+  //*/
 
   //----------------------------------------------------------------------------
   // void addForce(std::vector<float> targetPosition,
