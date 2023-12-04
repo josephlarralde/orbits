@@ -321,6 +321,7 @@ public:
   getNearestNeighbors(const std::vector<float> targetPosition,
                       std::size_t n,
                       bool removeFirstElement = true) {
+
     // radial dichotomic algorithm :
     // * we first initialize minRadius to 0 and maxRadius to the
     //   "hyper-diagonal" of (the longest possible distance in) the bounds
@@ -355,6 +356,7 @@ public:
 
     for (std::size_t i = 0; i < MAX_NNN_DICHOTOMIC_ITERATIONS; ++i) {
       float midRadius = (maxRadius + minRadius) * 0.5f;
+      // getNeighbors avoids the calls to sqrt to compute the actual distances
       massesAtRadius = getNeighbors(targetPosition, midRadius);
 
       if (massesAtRadius.size() < n + 1) {
