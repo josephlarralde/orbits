@@ -312,26 +312,31 @@ public:
   //----------------------------------------------------------------------------
 
   /*
-   * returns the n nearest neighbors with their respective distances, sorted by
-   * proximity.
+   * returns the n nearest neighbors with their respective distances sorted by
+   * proximity, with the closest Mass optionally removed (e.g. if its position
+   * is used as targetPosition)
    */
 
   std::vector<std::pair<MassPtr, float>>
   getNearestNeighbors(const std::vector<float> targetPosition,
                       std::size_t n,
-                      bool removeFirstElement = true) { // if we use e.g. a mass's position as target
-    // this is a dichotomic algorithm :
-    // * we first initialize minRadius to 0 and estimate maxRadius as the
-    //   "hyper-diagonal" (the longest possible distance) of the bounds
-    // * we adjust min and max radius iteratively until one of the following
-    //   things happens :
-    //   * we find a radius where we got exactly n neighbors and proceed
-    //     with it (actually we assign it to maxRadius)
+                      bool removeFirstElement = true) {
+    // radial dichotomic algorithm :
+    // * we first initialize minRadius to 0 and maxRadius to the
+    //   "hyper-diagonal" of (the longest possible distance in) the bounds
+    // * we adjust min and max radius by a dichotomic process until one of the
+    //   following conditions is met :
+    //   * we find a radius where we have exactly n neighbors and proceed
+    //     with it (by actually assigning it to maxRadius)
     //   * we exceed a max number of iterations and proceed with the
     //     current maxRadius, which should encompass a number of neighbors > n
     // * when we proceed, maxRadius represents a zone where we have n neighbors
     //   or more (but hopefully not too much), so we just sort the result of
-    //   getNeighborsAndDistances() by distance, and only keep the n closest
+    //   getNeighborsAndDistances() by distance, and only keep the n closest.
+    //   the complexity of this algorithm can likely show great variations
+    //   depending on the repartition of the masses ... if the repartition is
+    //   "regular", the complexity shouldn't be too bad (to be tested, or find a
+    //   better algorithm)
 
     float minRadius = 0.f;
     float maxRadius = 0.f; // max possible distance in bounds ("hyper-diagonal")
@@ -343,12 +348,12 @@ public:
     }
     maxRadius = std::sqrt(maxRadius);
 
-    const std::size_t MAX_KNN_DICHOTOMIC_ITERATIONS = 5;
+    const std::size_t MAX_NNN_DICHOTOMIC_ITERATIONS = 5;
 
     bool gotExactMatch = false;
     std::vector<MassPtr> massesAtRadius;
 
-    for (std::size_t i = 0; i < MAX_KNN_DICHOTOMIC_ITERATIONS; ++i) {
+    for (std::size_t i = 0; i < MAX_NNN_DICHOTOMIC_ITERATIONS; ++i) {
       float midRadius = (maxRadius + minRadius) * 0.5f;
       massesAtRadius = getNeighbors(targetPosition, midRadius);
 
@@ -363,7 +368,8 @@ public:
     }
 
     typedef std::pair<MassPtr, float> MassDist;
-    std::vector<MassDist> res = getNeighborsAndDistances(targetPosition,maxRadius);
+    std::vector<MassDist> res = getNeighborsAndDistances(targetPosition,
+                                                         maxRadius);
 
     if (res.size() < n + 1) {
       // raise error ??? or simply return smaller vector ... ?
